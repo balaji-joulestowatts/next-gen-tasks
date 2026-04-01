@@ -33,23 +33,34 @@ interface AddTodoDialogProps {
 export function AddTodoDialog({ onAdd, loading }: AddTodoDialogProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [summary, setSummary] = useState("");
+  const [notes, setNotes] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [dueDate, setDueDate] = useState("");
   const [category, setCategory] = useState("");
+
+  const composeDescription = (taskSummary: string, taskNotes: string) => {
+    const s = taskSummary.trim();
+    const n = taskNotes.trim();
+    if (!s && !n) return undefined;
+    if (s && !n) return `SUMMARY: ${s}`;
+    if (!s && n) return n;
+    return `SUMMARY: ${s}\nNOTES: ${n}`;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     onAdd({
       title: title.trim(),
-      description: description.trim() || undefined,
+      description: composeDescription(summary, notes),
       priority,
       due_date: dueDate || null,
       category: category.trim() || null,
     });
     setTitle("");
-    setDescription("");
+    setSummary("");
+    setNotes("");
     setPriority("medium");
     setDueDate("");
     setCategory("");
@@ -81,12 +92,21 @@ export function AddTodoDialog({ onAdd, loading }: AddTodoDialogProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="desc">Description</Label>
+            <Label htmlFor="summary">Summary</Label>
+            <Input
+              id="summary"
+              placeholder="Short summary (optional)"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
-              id="desc"
-              placeholder="Add some details..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="notes"
+              placeholder="More details (optional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               rows={3}
             />
           </div>
