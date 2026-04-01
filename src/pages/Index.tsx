@@ -6,6 +6,7 @@ import { TodoItem } from "@/components/TodoItem";
 import { AddTodoDialog } from "@/components/AddTodoDialog";
 import { TodoFilters, FilterStatus, FilterPriority, SortBy } from "@/components/TodoFilters";
 import { TodoStats } from "@/components/TodoStats";
+import { MediaToolsCard } from "@/components/MediaToolsCard";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -122,6 +123,8 @@ export default function Index() {
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
+
+        <MediaToolsCard />
 
         {/* List */}
         {isLoading ? (
