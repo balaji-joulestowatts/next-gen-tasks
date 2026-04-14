@@ -7,6 +7,7 @@ import Dashboard from "@/pages/Dashboard";
 import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import SmartTodos from "@/pages/SmartTodos";
+
 import SmartTodoForm from "@/pages/SmartTodoForm";
 
 export default function App() {
