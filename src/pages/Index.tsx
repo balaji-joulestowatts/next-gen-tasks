@@ -8,19 +8,32 @@ import { TodoFilters, FilterStatus, FilterPriority, SortBy } from "@/components/
 import { TodoStats } from "@/components/TodoStats";
 // import { MediaToolsCard } from "@/components/MediaToolsCard";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckCheck, CheckSquare, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const priorityOrder = { high: 0, medium: 1, low: 2 };
 
 export default function Index() {
   const { user, loading: authLoading, signOut } = useAuth();
-  const { todos, isLoading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos(user?.id);
+  const {
+    todos,
+    isLoading,
+    addTodo,
+    updateTodo,
+    deleteTodo,
+    toggleTodo,
+    markAllCompleted,
+    clearCompleted,
+  } = useTodos(user?.id);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<FilterStatus>("all");
   const [priority, setPriority] = useState<FilterPriority>("all");
   const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickPriority, setQuickPriority] = useState<"low" | "medium" | "high">("medium");
 
   const filteredTodos = useMemo(() => {
     let result = [...todos];
@@ -56,6 +69,69 @@ export default function Index() {
 
     return result;
   }, [todos, search, status, priority, sortBy]);
+
+  const activeCount = todos.filter((todo) => !todo.completed).length;
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  const activeTodos = filteredTodos.filter((todo) => !todo.completed);
+  const completedTodos = filteredTodos.filter((todo) => todo.completed);
+
+  const isPriorityValue = (value: string): value is "low" | "medium" | "high" => {
+    return value === "low" || value === "medium" || value === "high";
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setPriority("all");
+    setSortBy("newest");
+  };
+
+  const handleQuickAdd = (event: React.FormEvent) => {
+    event.preventDefault();
+    const title = quickTitle.trim();
+    if (!title) return;
+
+    addTodo.mutate(
+      {
+        title,
+        priority: quickPriority,
+      },
+      {
+        onSuccess: () => {
+          setQuickTitle("");
+          setStatus("active");
+          toast.success("Task captured");
+        },
+        onError: (error) => toast.error(error.message),
+      },
+    );
+  };
+
+  const renderTodoList = (items: typeof filteredTodos) => (
+    <div className="space-y-3">
+      <AnimatePresence mode="popLayout">
+        {items.map((todo) => (
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            onToggle={(id, completed) =>
+              toggleTodo.mutate({ id, completed })
+            }
+            onDelete={(id) =>
+              deleteTodo.mutate(id, {
+                onSuccess: () => toast.success("Task deleted"),
+              })
+            }
+            onUpdate={(data) =>
+              updateTodo.mutate(data, {
+                onSuccess: () => toast.success("Task updated"),
+              })
+            }
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  );
 
   if (authLoading) {
     return (
@@ -100,6 +176,35 @@ export default function Index() {
         {/* Stats */}
         <TodoStats todos={todos} />
 
+        <form onSubmit={handleQuickAdd} className="glass rounded-xl p-3 flex flex-col sm:flex-row gap-2">
+          <Input
+            value={quickTitle}
+            onChange={(event) => setQuickTitle(event.target.value)}
+            placeholder="Quick capture: add a task and press Enter"
+            className="h-10"
+          />
+          <Select
+            value={quickPriority}
+            onValueChange={(value) => {
+              if (isPriorityValue(value)) {
+                setQuickPriority(value);
+              }
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">🔴 High</SelectItem>
+              <SelectItem value="medium">🟡 Medium</SelectItem>
+              <SelectItem value="low">🟢 Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="submit" disabled={addTodo.isPending || !quickTitle.trim()}>
+            Add Fast
+          </Button>
+        </form>
+
         {/* Controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <AddTodoDialog
@@ -111,6 +216,34 @@ export default function Index() {
             }}
             loading={addTodo.isPending}
           />
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                markAllCompleted.mutate(undefined, {
+                  onSuccess: () => toast.success("All active tasks completed"),
+                  onError: (error) => toast.error(error.message),
+                })
+              }
+              disabled={activeCount === 0 || markAllCompleted.isPending}
+            >
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Complete All
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                clearCompleted.mutate(undefined, {
+                  onSuccess: () => toast.success("Completed tasks cleared"),
+                  onError: (error) => toast.error(error.message),
+                })
+              }
+              disabled={completedCount === 0 || clearCompleted.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Done
+            </Button>
+          </div>
         </div>
 
         <TodoFilters
@@ -122,6 +255,7 @@ export default function Index() {
           onPriorityChange={setPriority}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          onReset={resetFilters}
         />
 
         {/* Camera/Mic tools disabled */}
@@ -150,30 +284,38 @@ export default function Index() {
                 : "Try adjusting your filters"}
             </p>
           </motion.div>
-        ) : (
-          <div className="space-y-3">
-            <AnimatePresence mode="popLayout">
-              {filteredTodos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggle={(id, completed) =>
-                    toggleTodo.mutate({ id, completed })
-                  }
-                  onDelete={(id) =>
-                    deleteTodo.mutate(id, {
-                      onSuccess: () => toast.success("Task deleted"),
-                    })
-                  }
-                  onUpdate={(data) =>
-                    updateTodo.mutate(data, {
-                      onSuccess: () => toast.success("Task updated"),
-                    })
-                  }
-                />
-              ))}
-            </AnimatePresence>
+        ) : status === "all" ? (
+          <div className="space-y-6">
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold">Active Tasks</h2>
+                <span className="text-xs text-muted-foreground">{activeTodos.length}</span>
+              </div>
+              {activeTodos.length > 0 ? (
+                renderTodoList(activeTodos)
+              ) : (
+                <div className="glass rounded-xl p-4 text-sm text-muted-foreground text-center">
+                  No active tasks in this view.
+                </div>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-semibold">Completed</h2>
+                <span className="text-xs text-muted-foreground">{completedTodos.length}</span>
+              </div>
+              {completedTodos.length > 0 ? (
+                renderTodoList(completedTodos)
+              ) : (
+                <div className="glass rounded-xl p-4 text-sm text-muted-foreground text-center">
+                  No completed tasks in this view.
+                </div>
+              )}
+            </section>
           </div>
+        ) : (
+          renderTodoList(filteredTodos)
         )}
       </main>
     </div>

@@ -13,9 +13,10 @@ type TodoInsert = {
 
 export function useTodos(userId: string | undefined) {
   const queryClient = useQueryClient();
+  const todosQueryKey = ["todos", userId] as const;
 
   const todosQuery = useQuery({
-    queryKey: ["todos", userId],
+    queryKey: todosQueryKey,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("todos")
@@ -37,7 +38,7 @@ export function useTodos(userId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
   });
 
   const updateTodo = useMutation({
@@ -51,7 +52,7 @@ export function useTodos(userId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
   });
 
   const deleteTodo = useMutation({
@@ -59,7 +60,7 @@ export function useTodos(userId: string | undefined) {
       const { error } = await supabase.from("todos").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
   });
 
   const toggleTodo = useMutation({
@@ -70,7 +71,31 @@ export function useTodos(userId: string | undefined) {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
+  });
+
+  const markAllCompleted = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("todos")
+        .update({ completed: true })
+        .eq("user_id", userId!)
+        .eq("completed", false);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
+  });
+
+  const clearCompleted = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("todos")
+        .delete()
+        .eq("user_id", userId!)
+        .eq("completed", true);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: todosQueryKey }),
   });
 
   return {
@@ -80,5 +105,7 @@ export function useTodos(userId: string | undefined) {
     updateTodo,
     deleteTodo,
     toggleTodo,
+    markAllCompleted,
+    clearCompleted,
   };
 }

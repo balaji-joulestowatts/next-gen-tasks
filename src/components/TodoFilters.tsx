@@ -22,7 +22,16 @@ interface TodoFiltersProps {
   onPriorityChange: (v: FilterPriority) => void;
   sortBy: SortBy;
   onSortChange: (v: SortBy) => void;
+  onReset: () => void;
 }
+
+const isFilterPriority = (value: string): value is FilterPriority => {
+  return value === "all" || value === "low" || value === "medium" || value === "high";
+};
+
+const isSortBy = (value: string): value is SortBy => {
+  return value === "newest" || value === "oldest" || value === "priority" || value === "due_date";
+};
 
 export function TodoFilters({
   search,
@@ -33,7 +42,11 @@ export function TodoFilters({
   onPriorityChange,
   sortBy,
   onSortChange,
+  onReset,
 }: TodoFiltersProps) {
+  const hasActiveFilters =
+    search.trim().length > 0 || status !== "all" || priority !== "all" || sortBy !== "newest";
+
   return (
     <div className="flex flex-col sm:flex-row gap-3">
       <div className="relative flex-1">
@@ -59,7 +72,14 @@ export function TodoFilters({
             </Button>
           ))}
         </div>
-        <Select value={priority} onValueChange={(v) => onPriorityChange(v as FilterPriority)}>
+        <Select
+          value={priority}
+          onValueChange={(value) => {
+            if (isFilterPriority(value)) {
+              onPriorityChange(value);
+            }
+          }}
+        >
           <SelectTrigger className="w-[110px]">
             <ListFilter className="h-4 w-4 mr-1" />
             <SelectValue />
@@ -71,7 +91,14 @@ export function TodoFilters({
             <SelectItem value="low">🟢 Low</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortBy)}>
+        <Select
+          value={sortBy}
+          onValueChange={(value) => {
+            if (isSortBy(value)) {
+              onSortChange(value);
+            }
+          }}
+        >
           <SelectTrigger className="w-[120px]">
             <SelectValue />
           </SelectTrigger>
@@ -82,6 +109,11 @@ export function TodoFilters({
             <SelectItem value="due_date">Due Date</SelectItem>
           </SelectContent>
         </Select>
+        {hasActiveFilters && (
+          <Button size="sm" variant="outline" onClick={onReset}>
+            Reset
+          </Button>
+        )}
       </div>
     </div>
   );
