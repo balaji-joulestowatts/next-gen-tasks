@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { format, isPast, isToday } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,7 +54,10 @@ const priorityConfig = {
   high: { label: "High", className: "bg-priority-high/15 text-priority-high border-priority-high/30" },
 };
 
-export function TodoItem({ todo, onToggle, onDelete, onUpdate }: TodoItemProps) {
+export const TodoItem = forwardRef<HTMLDivElement, TodoItemProps>(function TodoItem(
+  { todo, onToggle, onDelete, onUpdate },
+  ref
+) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const initial = parseDescription(todo.description);
@@ -95,6 +98,7 @@ export function TodoItem({ todo, onToggle, onDelete, onUpdate }: TodoItemProps) 
 
   return (
     <motion.div
+      ref={ref}
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -235,4 +239,4 @@ export function TodoItem({ todo, onToggle, onDelete, onUpdate }: TodoItemProps) 
       </div>
     </motion.div>
   );
-}
+});

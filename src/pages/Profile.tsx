@@ -18,6 +18,16 @@ type ProfileData = {
 
 const STORAGE_KEY = "app.profile";
 
+function getDefaultProfile(): ProfileData {
+  return {
+    displayName: "",
+    bio: "",
+    avatar: null,
+    emailNotifications: false,
+    darkMode: false,
+  };
+}
+
 function loadProfile(): ProfileData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -31,20 +41,18 @@ function loadProfile(): ProfileData {
         darkMode: Boolean(parsed.darkMode),
       };
     }
-  } catch (_) {}
-  return {
-    displayName: "",
-    bio: "",
-    avatar: null,
-    emailNotifications: false,
-    darkMode: false,
-  };
+  } catch {
+    return getDefaultProfile();
+  }
+  return getDefaultProfile();
 }
 
 function saveProfile(data: ProfileData) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (_) {}
+  } catch {
+    return;
+  }
 }
 
 export default function Profile() {

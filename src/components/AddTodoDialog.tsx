@@ -48,6 +48,10 @@ export function AddTodoDialog({ onAdd, loading }: AddTodoDialogProps) {
     return `SUMMARY: ${s}\nNOTES: ${n}`;
   };
 
+  const isPriorityValue = (value: string): value is "low" | "medium" | "high" => {
+    return value === "low" || value === "medium" || value === "high";
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -113,7 +117,14 @@ export function AddTodoDialog({ onAdd, loading }: AddTodoDialogProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Priority</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
+              <Select
+                value={priority}
+                onValueChange={(value) => {
+                  if (isPriorityValue(value)) {
+                    setPriority(value);
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
