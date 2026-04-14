@@ -2,7 +2,7 @@ import * as React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Index from "@/pages/Index";
-import Dashboard from "@/pages/Dashboard";
+// import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
@@ -29,7 +29,7 @@ function App() {
       <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
 
       <Route path="/" element={user ? <Index /> : <Navigate to="/auth" replace />} />
-      <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" replace />} />
+      {/* <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/auth" replace />} /> */}
       <Route path="/profile" element={user ? <Profile /> : <Navigate to="/auth" replace />} />
       <Route path="/smart-todos" element={user ? <SmartTodos /> : <Navigate to="/auth" replace />} />
       <Route path="/smart-todos/new" element={user ? <SmartTodoForm /> : <Navigate to="/auth" replace />} />
