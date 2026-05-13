@@ -18,6 +18,7 @@ type ProfileData = {
 
 const STORAGE_KEY = "app.profile";
 
+
 function getDefaultProfile(): ProfileData {
   return {
     displayName: "",
